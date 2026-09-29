@@ -1,128 +1,78 @@
-# Proyecto Final — Gestor de Tareas API
+# Gestor de Tareas API
 
-**Arquitectura Backend Moderna · Ficha 3231102 (ADSO — SENA)**
+Proyecto final — Arquitectura Backend Moderna (ADSO - SENA, Ficha 3231102)
 
-Proyecto integrador del trimestre. Construirás una API para gestionar
-**tareas** que reúne **todo** lo aprendido en el módulo:
+**Autor:** Andres Felipe Arcila
 
-- **MongoDB (async)** con `AsyncMongoClient` — *Clase 5*
-- **API con FastAPI**, Pydantic y `/docs` — *Clase 4*
-- **CRUD completo y persistente** — *Clases 3 y 5*
-- **Seguridad**: registro, login, JWT y rutas protegidas — *Clase 6*
+## ¿Qué hace?
 
-> El tema es un gestor de tareas, pero puedes adaptarlo a otro dominio
-> (gastos, contactos, inventario…) siempre que cumpla los mismos requisitos.
+Es una API para manejar tareas. Cualquiera puede registrarse e iniciar sesión.
+Ver las tareas es público, pero crear, editar o eliminar necesita estar
+logueado. Cada usuario solo puede modificar sus propias tareas.
 
----
+## Tecnologías
 
-## 1. Qué debe hacer tu API (requisitos funcionales)
+- Python y FastAPI
+- MongoDB Atlas (con PyMongo async)
+- Argon2 para guardar las contraseñas
+- JWT para el login
+- python-dotenv para los secretos
 
-**Seguridad**
-- [ ] `POST /registro` — crea un usuario con la contraseña **hasheada**.
-- [ ] `POST /login` — verifica y devuelve un **token JWT**.
-- [ ] Una dependencia que valide el token (ya incluida: `usuario_actual`).
+## Cómo correrlo
 
-**CRUD de tareas** (regla: *leer es público; modificar exige token*)
-- [ ] `GET /tareas` — listar todas (ya incluido como ejemplo).
-- [ ] `GET /tareas/{id}` — una tarea por su id.
-- [ ] `POST /tareas` — crear **(protegido)**.
-- [ ] `PUT /tareas/{id}` — actualizar **(protegido)**.
-- [ ] `DELETE /tareas/{id}` — eliminar **(protegido)**.
+1. Clonar el proyecto:
+   ```bash
+   git clone https://github.com/pipedaz7z/proyecto-final-gestor-tareas.git
+   cd proyecto-final-gestor-tareas
+   ```
 
-**Reto opcional (nota máxima)**
-- [ ] Cada usuario ve solo **sus** tareas (`GET /mis-tareas`).
-- [ ] Desplegar la API en la nube (Render / Railway).
+2. Crear el entorno virtual e instalar las librerías:
+   ```bash
+   python -m venv venv
+   venv\Scripts\activate        # en Mac/Linux: source venv/bin/activate
+   pip install -r requirements.txt
+   ```
 
----
+3. Copiar `.env.example` a `.env` y llenarlo con tus datos:
+   ```
+   MONGO_URI=tu_cadena_de_conexion_de_atlas
+   SECRET_KEY=una_clave_larga_y_aleatoria
+   ```
 
-## 2. Requisitos técnicos
+4. Arrancar el servidor:
+   ```bash
+   uvicorn main:app --reload
+   ```
 
-- Python 3 y entorno virtual.
-- Base de datos en **MongoDB Atlas** (la misma cuenta de las clases).
-- Los secretos (URI de Mongo y `SECRET_KEY`) van en un archivo **`.env`**,
-  **nunca** dentro del código ni en GitHub.
-- Stack (ya listado en `requirements.txt`): FastAPI, PyMongo, pwdlib (Argon2),
-  PyJWT, python-multipart, python-dotenv.
+5. Abrir la documentación: http://127.0.0.1:8000/docs
 
----
+## Endpoints
 
-## 3. Estructura del proyecto
+| Método | Ruta | ¿Necesita login? | Qué hace |
+|---|---|---|---|
+| POST | /registro | No | Crea un usuario |
+| POST | /login | No | Devuelve el token |
+| GET | /tareas | No | Lista las tareas |
+| GET | /tareas/{id} | No | Muestra una tarea |
+| POST | /tareas | Sí | Crea una tarea |
+| PUT | /tareas/{id} | Sí | Edita una tarea |
+| DELETE | /tareas/{id} | Sí | Elimina una tarea |
+| GET | /mis-tareas | Sí | Lista solo mis tareas |
 
-```
-proyecto_final/
-├── main.py            # tu API (aquí completas los # TODO)
-├── requirements.txt   # librerías del proyecto
-├── .env.example       # plantilla de secretos (cópiala a .env)
-├── .gitignore         # evita subir venv y .env
-└── README.md          # este archivo
-```
+## Cómo funciona
 
----
+- **Registro:** la clave se guarda hasheada con Argon2, nunca en texto.
+- **Login:** si el correo y la clave son correctos, la API devuelve un token
+  JWT que dura 60 minutos.
+- **Rutas protegidas:** sin token responden 401.
+- **Tareas por usuario:** al crear una tarea se guarda quién la creó. Si
+  alguien intenta editar o borrar la de otro, responde 403.
 
-## 4. Configuración paso a paso
+## Cómo probarlo en /docs
 
-```bash
-# 1. Entorno virtual
-python -m venv venv
-source venv/bin/activate        # Windows:  venv\Scripts\activate
-
-# 2. Instalar dependencias
-pip install -r requirements.txt
-
-# 3. Crear tu archivo de secretos a partir de la plantilla
-#    (copia .env.example -> .env y edítalo con tus datos)
-#    - MONGO_URI:  tu cadena de conexión de Atlas
-#    - SECRET_KEY: genera una con ->  openssl rand -hex 32
-
-# 4. Correr el servidor
-uvicorn main:app --reload
-
-# 5. Abrir la documentación interactiva
-#    http://127.0.0.1:8000/docs
-```
-
----
-
-## 5. Cómo probar (flujo completo en /docs)
-
-1. `POST /registro` → crea un usuario. Ábrelo en Compass: la clave debe
-   verse como `$argon2...`, **no** como texto.
-2. Botón **Authorize** (arriba a la derecha) → inicia sesión.
-3. `POST /tareas` **sin** login → debe rechazar (401).
-   Con **Authorize** puesto → debe crear la tarea.
-4. `GET /tareas` → la tarea aparece.
-5. Apaga y reinicia el servidor, vuelve a `GET /tareas`: **sigue ahí**
-   (persistencia).
-
----
-
-## 6. Qué completar
-
-Abre `main.py` y resuelve cada bloque marcado con `# TODO`. El archivo ya
-trae, como referencia, toda la configuración, los modelos, la dependencia
-`usuario_actual` y el endpoint `GET /tareas`. Úsalos como plantilla.
-
----
-
-## 7. Rúbrica de evaluación
-
-| Criterio | Qué se revisa |
-|---|---|
-| CRUD funcional | Las operaciones responden bien desde `/docs`. |
-| Persistencia | Un dato creado sobrevive al reinicio (está en Atlas). |
-| Hashing | Las contraseñas se ven hasheadas en Compass (`$argon2...`). |
-| Autenticación | Registro y login funcionan; el login entrega un JWT. |
-| Rutas protegidas | Sin token rechazan (401); con login permiten. |
-| Buenas prácticas | Secretos en `.env`, no en el código; repo limpio. |
-| Extra | Tareas por usuario y/o despliegue en la nube. |
-
----
-
-## 8. Forma de entrega
-
-1. Sube el proyecto a un **repositorio de GitHub** (sin el `.env`).
-2. Incluye un **README** propio explicando cómo correrlo.
-3. **Sustentación**: muestra el flujo completo en `/docs` — registro,
-   login, crear una tarea protegida y la persistencia tras reiniciar.
-
-**Fecha de entrega:** _____________  ·  **Modalidad:** individual / parejas (según indique el instructor).
+1. Registrarse con `POST /registro`.
+2. Probar `POST /tareas` sin login: da 401.
+3. Pulsar **Authorize** y entrar con el correo y la clave.
+4. Crear una tarea con `POST /tareas`.
+5. Ver la tarea con `GET /tareas`.
+6. Reiniciar el servidor y volver a listar: la tarea sigue ahí.
